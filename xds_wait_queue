@@ -1,0 +1,22 @@
+#!/bin/bash
+#Jie Nan at MAXIV, 12/2016
+#jie.nan@maxiv.lu.se
+
+#wait for all the jobs submited to SLURM are finished
+#input (taskid_list) is a list of jobids seperated by comma
+
+taskid_list=$1
+
+TIMEOUT=600 # timeout for checking job status is 600s
+t_count=0
+t_sleep=2
+while [ $t_count -lt $TIMEOUT ]
+do
+  job_status=`squeue -j $taskid_list -h`
+  if [ "$job_status" = "" ]
+    then break
+    else echo "Have waited $t_count s" #echo "running job $job_status" 
+  fi
+ sleep $t_sleep
+ t_count=`expr $t_count + $t_sleep`
+done
