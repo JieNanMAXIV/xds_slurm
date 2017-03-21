@@ -1,0 +1,28 @@
+#!/bin/bash
+# Jie Nan, 03/2017
+# for running XDS on MAXIV HPC
+
+
+process_dir=`pwd`
+sbatch $MX_SOFT/XDS/xds.sh >current_job
+current_job=`awk '/Submitted batch job/ {print $4}' current_job`
+
+echo $current_job
+
+TIMEOUT=600
+t_count=0
+t_sleep=2
+
+while [ $t_count -lt $TIMEOUT ]
+do
+  squeue -j $current_job -h >$process_dir/current_job.status
+  echo $process_dir
+  #ssh cn2 "squeue -j $current_job -h >$process_dir/current_job.status"
+  current_job_status=$(<current_job.status)
+  if [[ $current_job_status = "" ]]
+    then echo "XDS is finished"; break
+    else echo "Running XDS on the HPC, have waited $t_count s" #echo "running job $job_status" 
+  fi
+ sleep $t_sleep
+ t_count=`expr $t_count + $t_sleep`
+done
