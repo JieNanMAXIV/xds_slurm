@@ -16,7 +16,7 @@
 cat $0
 
 # load the modules required for you program - customise for your program
-export PATH="/home/jienan/bin/xtal/XDS:$PATH"
+export PATH="$MX_SOFT/XDS:$PATH"
 
 itask=$1
 echo $itask >> jobs.log
