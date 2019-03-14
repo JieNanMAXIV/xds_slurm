@@ -1,0 +1,38 @@
+#!/bin/bash
+#an example of sbatch file to submit xds fork job
+#Jie Nan at MAXIV, 08/2017
+#jie.nan@maxiv.lu.se
+
+#SBATCH -t 00:20:00
+
+# job id
+
+# filenames stdout and stderr - customise, include %j
+#SBATCH -o xds_fork_%j.out
+#SBATCH -e xds_fork_%j.err
+#SBATCH --exclusive
+#SBATCH --mincpus=48
+#SBATCH --mem=220000
+
+
+# write this script to stdout-file - useful for scripting errors
+cat $0
+
+# load the modules required for you program - customise for your program
+export PATH="$MX_SOFT_XDS:$PATH"
+
+#    main   ::name of the main program to be executed; could be
+#             mcolspot | mcolspot_par | mintegrate | mintegrate_par
+#    an example of launching the script could be
+#    sbatch xdsfork_job mintegrate_par 1 2 3 4 
+
+main=$1
+shift 1
+itask=$2
+while (( "$#" )); do
+  itask=$1
+  echo "now I will process task $itask"
+  echo $itask | $main
+  shift
+  sync
+done

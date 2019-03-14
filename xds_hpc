@@ -1,4 +1,4 @@
 #!/bin/bash
 # Jie Nan, 12/2016
-# for running XDS on MAXIV HPC
-sbatch /mxn/groups/biomax/cmxsoft/XDS/xds.sh 
+# for running XDS on HPC
+sbatch $MX_SOFT_XDS/xds.sh 

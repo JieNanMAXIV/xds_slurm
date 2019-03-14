@@ -19,7 +19,7 @@
 cat $0
 
 # load the modules required for you program - customise for your program
-export PATH="$MX_SOFT/XDS:$PATH"
+export PATH="$MX_SOFT_XDS:$PATH"
 
 
 # run the program

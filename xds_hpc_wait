@@ -1,10 +1,10 @@
 #!/bin/bash
 # Jie Nan, 03/2017
-# for running XDS on MAXIV HPC
+# for running XDS on HPC
 
 
 process_dir=`pwd`
-sbatch $MX_SOFT/XDS/xds.sh >current_job
+sbatch $MX_SOFT_XDS/xds.sh >current_job
 current_job=`awk '/Submitted batch job/ {print $4}' current_job`
 
 echo $current_job

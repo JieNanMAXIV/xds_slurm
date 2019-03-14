@@ -1,0 +1,77 @@
+#!/bin/bash
+#                    forkxds          Version 5-2017
+# enables  multi-tasking by splitting the COLSPOT and INTEGRATE
+# steps of xds into independent jobs. Each job is carried out by 
+# a Fortran main program (mcolspot, mcolspot_par, mintegrate, or
+# mintegrate_par). The jobs are distributed among the processor 
+# nodes of the NFS cluster network.
+#
+# 'forkxds' is called by xds or xds_par by the Fortran instruction
+# CALL SYSTEM('forkxds ntask main rhosts'),
+#    ntask  ::total number of jobs
+#    main   ::name of the main program to be executed; could be
+#             mcolspot | mcolspot_par | mintegrate | mintegrate_par
+#    nhosts :: numbers of CPU cluster nodes
+#Jie Nan at MAXIV, 08/2017
+#jie.nan@maxiv.lu.se
+#to run XDS integrate on multiple nodes under SLURM
+
+ntask=$1  #total number of jobs
+maxcpu=$2
+echo "MAX CPU is $maxcpu"
+main=$3   #name of the main program to be executed
+echo "now the main program is $main"
+#!!!!CLUSTER_NODES (XDS.INP) should be the number of cluster nodes
+nhost=$4
+#if CLUSTER_NODES is not defined or nodefined properly, use 1 by default
+if [ "$nhost" -eq "$nhost" ] 2>/dev/null; then
+   if [ $nhost -lt 1 ]; then
+      nhost=1
+   fi
+else
+   echo "CLUSTER_NODES is not defined"
+   nhost=1
+fi
+
+pids=""                         #list of background process ID's
+task_per_node=`expr $ntask / $nhost`
+task_start=1
+task_end=0
+ihost=1
+flag=`expr $ntask % $nhost`
+echo "task_per_node is $task_per_node, flag is $flag"
+while test $task_start -le $ntask
+do
+   #if [ $nhosts -gt 1 ]        #distribute jobs among the cluster nodes
+   if [ $flag -ge $ihost ]
+   then
+      task_end=`expr $task_start  + $task_per_node `
+   else
+      task_end=`expr $task_start  + $task_per_node - 1`
+   fi
+   echo "for host $ihost the tasks should run from $task_start to $task_end"
+
+   if [ $ihost -gt 1 ]
+   then
+      #j=`expr $itask % $nhosts`
+      task_list=`seq -s" " $task_start $task_end`
+      jobid_tmp=`sbatch --export=ALL --tasks-per-node=$maxcpu forkxds_job $main $task_list &`
+      #echo "......................sbatch --export=ALL forkxds_job $main $task_list "
+      jobid_tmp=`echo $jobid_tmp |awk '/Submitted batch job/ {print $4}'`
+      jobid_list="$jobid_list,$jobid_tmp"
+   else
+      for itask in `seq $task_start $task_end`;
+        do
+           #echo "run task $itask locally"
+           echo "$itask" | $main &  #submit all jobs to the peer node
+           pids="$pids $!"
+        done
+   fi
+   ihost=`expr $ihost + 1`
+   task_start=`expr $task_end  + 1`
+done
+
+trap "kill -15 $pids" 2 15     # 2:Control-C; 15:kill
+wait                           #wait for all background processes issued
+xds_wait_queue $jobid_list &
+wait $!
