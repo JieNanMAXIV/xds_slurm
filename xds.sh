@@ -1,14 +1,15 @@
 #!/bin/bash
 #an example of sbatch file to submit xds_par job
-#Jie Nan at MAXIV, 12/2016
+#Jie Nan at MAXIV, 08/2019
 #jie.nan@maxiv.lu.se
 
-#SBATCH -t 00:20:00
+#SBATCH -t 00:60:00
 #job name
 #SBATCH -J xds_biomax
-#SBATCH --exclusive
 #SBATCH -N1
-#SBATCH --cpus-per-task=20
+#SBATCH --exclusive
+#SBATCH --mincpus=48
+#SBATCH --mem=220000
 
 
 # filenames stdout and stderr - customise, include %j
@@ -19,9 +20,10 @@
 cat $0
 
 # load the modules required for you program - customise for your program
-export PATH="$MX_SOFT_XDS:$PATH"
+MX_SOFT=/mxn/groups/biomax/cmxsoft
+export PATH="$MX_SOFT/XDS:$PATH"
 
 
 # run the program
 # customise for your program name and add arguments if required
-xds_par
+xds_par_ori
