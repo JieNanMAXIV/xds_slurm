@@ -5,7 +5,7 @@ process_dir=`pwd`
 sbatch /mxn/groups/biomax/cmxsoft/XDS/xds.sh >current_job
 current_job=`awk '/Submitted batch job/ {print $4}' current_job`
 # in case of ctrl+c or kill, cancel the slurm job
-trap "scancel $current_job" 2
+trap "scancel $current_job" SIGINT SIGTERM 
 
 
 TIMEOUT=600
