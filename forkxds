@@ -77,7 +77,7 @@ do
       jobid_tmp=`sbatch --export=ALL --tasks-per-node=$maxcpu forkxds_job $main $task_list &`
       #echo "......................sbatch --export=ALL forkxds_job $main $task_list "
       jobid_tmp=`echo $jobid_tmp |awk '/Submitted batch job/ {print $4}'`
-      jobid_list="$jobid_list,$jobid_tmp"
+      jobid_list="$jobid_list $jobid_tmp"
    else
       for itask in `seq $task_start $task_end`;
         do
@@ -90,8 +90,9 @@ do
    task_start=`expr $task_end  + 1`
 done
 
-trap "kill -15 $pids" 2 15     # 2:Control-C; 15:kill
+echo $jobid_list > current_subjob
+trap "kill -15 $pids;scancel $jobid_list" 2 15     # 2:Control-C; 15:kill
 wait                           #wait for all background processes issued
-xds_wait_queue $jobid_list &
+xds_wait_queue ${jobid_list// /,} &
 wait $!
-
+rm current_subjob
