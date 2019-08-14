@@ -9,8 +9,14 @@ current_job=`awk '/Submitted batch job/ {print $4}' current_job`
 function kill_job()
 {
    scancel $1
-   current_subjob=`cat current_subjob`
-   scancel $current_subjob
+   if [ -f "current_subjob" ]
+   then
+       current_subjob=`cat current_subjob`
+       if [ ! -z "$current_subjob" ]
+       then
+          scancel $current_subjob
+       fi
+   fi
 }
 
 trap "kill_job $current_job" SIGINT SIGTERM #2 15
