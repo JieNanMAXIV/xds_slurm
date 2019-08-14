@@ -15,7 +15,6 @@ do
   job_status=`squeue -j $taskid_list -h`
   if [ "$job_status" = "" ]
     then break
-    else echo "Have waited $t_count s" #echo "running job $job_status" 
   fi
  sleep $t_sleep
  t_count=`expr $t_count + $t_sleep`
