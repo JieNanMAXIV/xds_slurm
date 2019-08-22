@@ -26,4 +26,4 @@ export PATH="$MX_SOFT/XDS:$PATH"
 
 # run the program
 # customise for your program name and add arguments if required
-xds_par_ori
+xds_par
