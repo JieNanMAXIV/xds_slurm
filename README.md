@@ -8,6 +8,7 @@ Steps to set up XDS on a SLURM system
 5. Make sure all files are executable (otherwise run "chmod +x" in Linux).
 6. Modify the XDS path in the forkxds_job and adapt to your local SLURM environment if needed.
 7. Optional, modify the "wait timeout" value (in the xds_wait_queue, default 600s).
+8. optional, under the folder otherPC, there is a file called xds_par_cc, which is an exmaple to run xds_par on HPC from a local machine (and give real-time output in terminal, can be terminated by ctrl+c or kill). To use it, you can copy this file to a local machine (modify accordingly), rename to xds_par and add to your environment. 
 
 How it works
 You need to launch xds by "xds_par", as one normally runs XDS. XDS will run on one node for most JOBs, except for that during colspot and integration steps,the forked jobs will be run on CLUSTER_NODES nodes. 
