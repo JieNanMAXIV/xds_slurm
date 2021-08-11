@@ -1,98 +1,45 @@
-#!/bin/bash
-#                    forkxds          Version 5-2017, 7-2017
-#
-# enables  multi-tasking by splitting the COLSPOT and INTEGRATE
-# steps of xds into independent jobs. Each job is carried out by 
-# a Fortran main program (mcolspot, mcolspot_par, mintegrate, or
-# mintegrate_par). The jobs are distributed among the processor 
-# nodes of the NFS cluster network.
-#
-# 'forkxds' is called by xds or xds_par by the Fortran instruction
-# CALL SYSTEM('forkxds ntask maxcpu main rhosts'),
-#    ntask  ::total number of independent jobs (tasks)
-#   maxcpu  ::maximum number of processors used by each job
-#    main   ::name of the main program to be executed; could be
-#             mcolspot | mcolspot_par | mintegrate | mintegrate_par
-#   rhosts  ::names of CPU cluster nodes in the NFS network 
-#
-# NOTE, that this can only work if the main program and this shell
-# script are correctly installed in the search path for executables.
-#
-# NOTE: No blanks allowed adjacent to the = signs !!!
-#
-# W.Kabsch & K.Rohm    original version Februar 2005
-# K.Diederichs 9-2005  modification for execution on remote hosts
-# W.Kabsch 5-2017      simplified version replacing the old scripts
-#                      (forkcolspot,forkintegrate); more flexibility
-#                      by using names of the cluster nodes as input
-#                      arguments of this shell script
-#         10-2017      sync added after $amain to complete pending 
-#                      disk writes on each node (suggested by M. Fodje)
-
-#Jie Nan at MAXIV, 08/2019
+#Jie Nan at MAXIV, 08/2021
 #jie.nan@maxiv.lu.se
-#to run XDS integrate on multiple nodes under SLURM
+#to run XDSfork on multiple nodes under SLURM
 
 ntask=$1  #total number of jobs
+# for maxcpu here we use 24 to match the HPC nodes
 maxcpu=$2 #maximum number of processors used by each job
-echo "MAX CPU is $maxcpu"
 main=$3   #name of the main program to be executed
 #!!!!CLUSTER_NODES (XDS.INP) should be the number of cluster nodes
-nhost=$4
+#or same as ntask if undefined
+nhosts=$4
 
-#if CLUSTER_NODES is not defined or not defined properly, use $ntask by default
-if [ "$nhost" -eq "$nhost" ] 2>/dev/null; then
-   if [ $nhost -lt 1 ]; then
-      nhost=$ntask
-      echo "CLUSTER_NODES is not defined properly, use $ntask"
-   fi
-else
-   nhost=$ntask
-   echo "CLUSTER_NODES is not defined, use $ntask"
+#if ntask not defined, use 4
+if [ -z "$ntask" ]; then
+   ntask=4
 fi
 
-
-pids=""                         #list of background process ID's
-task_per_node=`expr $ntask / $nhost`
-task_start=1
-task_end=0
-ihost=1
-flag=`expr $ntask % $nhost`
-echo "task_per_node is $task_per_node, flag is $flag"
-while test $task_start -le $ntask
-do
-   #if [ $nhosts -gt 1 ]        #distribute jobs among the cluster nodes
-   if [ $flag -ge $ihost ]
-   then
-      task_end=`expr $task_start  + $task_per_node `
-   else
-      task_end=`expr $task_start  + $task_per_node - 1`
+#if CLUSTER_NODES is not defined or not defined properly, use $ntask by default
+if [ -z "$nhosts" ]; then
+   nhosts=$ntask
+   echo "CLUSTER_NODES is not defined, use $ntask"
+else
+   if [ $nhosts -lt 1 ]; then
+      nhosts=$ntask
+      echo "CLUSTER_NODES is not defined properly, use $ntask"
    fi
-   echo "for host $ihost the tasks should run from $task_start to $task_end"
+fi
 
-   if [ $ihost -gt 1 ]
-   then
-      #j=`expr $itask % $nhosts`
-      task_list=`seq -s" " $task_start $task_end`
-      jobid_tmp=`sbatch --export=ALL --tasks-per-node=$maxcpu forkxds_job $main $task_list &`
-      #echo "......................sbatch --export=ALL forkxds_job $main $task_list "
-      jobid_tmp=`echo $jobid_tmp |awk '/Submitted batch job/ {print $4}'`
-      jobid_list="$jobid_list $jobid_tmp"
-   else
-      for itask in `seq $task_start $task_end`;
-        do
-           #echo "run task $itask locally"
-           echo "$itask" | $main &  #submit all jobs to the peer node
-           pids="$pids $!"
-        done
-   fi
-   ihost=`expr $ihost + 1`
-   task_start=`expr $task_end  + 1`
-done
+if [ $nhosts -gt 1 ]; then
+  nhosts_new=`expr $nhosts - 1`
+  #may need modification to adapt to the local HPC environment
+  jobid_tmp=`salloc -N$nhosts_new --exclusive -p bio --no-shell -t 01:00:00 forkxds 2>&1`
+  jobid=`echo $jobid_tmp |awk '/salloc: Granted job allocation/{print $5}'`
+  #extract and list the allocated nodes, may need modification to adapt to the local HPC environment
+  nhosts=`squeue -j $jobid |grep $jobid | awk '{ start=index($8,"["); end=index($8,"]"); pre=substr($8,1,start-1); nodelist=substr($8,start+1,end-start-1); split(nodelist,a,","); for (i in a)  {if (a[i]~/-/) {split(a[i],b,"-"); for (c=b[1];c<=b[2];c++) printf pre c" " }  else print pre a[i]" ";} }'`
+else
+  nhosts= ""
+fi
+nhosts="localhost $nhosts"
 
-echo $jobid_list > current_subjob
-trap "kill -15 $pids;scancel $jobid_list" 2 15     # 2:Control-C; 15:kill
-wait                           #wait for all background processes issued
-xds_wait_queue ${jobid_list// /,} &
-wait $!
-rm current_subjob
+xds_dir=`dirname "$0"`
+$xds_dir/forkxds_ori $ntask $maxcpu $main $nhosts
+if [ ! -z $jobid ]; then
+   scancel $jobid
+fi
