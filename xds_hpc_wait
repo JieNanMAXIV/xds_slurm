@@ -1,0 +1,32 @@
+#!/bin/bash
+# Jie Nan, 03/2020
+# for running XDS on MAXIV HPC
+
+
+process_dir=`pwd`
+sbatch /mxn/groups/sw/mxsw/XDS/xds.sh >current_job
+current_job=`awk '/Submitted batch job/ {print $4}' current_job`
+# in case of ctrl+c or kill, cancel the slurm job
+trap "scancel $current_job" 2
+
+
+TIMEOUT=600
+t_count=0
+t_sleep=2
+
+slurm_output="xds_hpc_$current_job.out"
+
+#send the output to the terminal screen until the script stops
+tail --retry -f $slurm_output --pid=$$ &
+
+while [ $t_count -lt $TIMEOUT ]
+do
+  squeue -j $current_job -h >$process_dir/current_job.status
+  current_job_status=$(<current_job.status)
+  if [[ $current_job_status = "" ]]
+    then break
+    #else echo "Running XDS on the HPC, have run $t_count s" #echo "running job $job_status" 
+  fi
+ sleep $t_sleep
+ t_count=`expr $t_count + $t_sleep`
+done

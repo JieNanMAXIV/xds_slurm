@@ -11,8 +11,10 @@ Steps to set up XDS on a SLURM system
 8. optional, under the folder otherPC, the file forkxds_bs and forxds_bs_remote, is an example of only sending forked jobs to HPC, the rest of XDS jobs will run on a local server. You need to copy forkxds_bs_remote to XDS installation on the local server and replace forkxds
 9. for 7 and 8, it's important to set up passwordless login between the local machine and HPC, otherwise you will have to type in password all the time.
 
-How it works
-You need to launch xds by "xds_par", as one normally runs XDS. XDS will run on one node for most JOBs, except for that during colspot and integration steps,the forked jobs will be run on CLUSTER_NODES nodes. 
+How to run
+Option 1) launch xds by "xds_par", as one normally runs XDS. XDS will run on one node for most JOBs, except for that during colspot and integration steps,the forked jobs will be run on CLUSTER_NODES nodes. 
+Option 2) launch the xds job on new cluster nodes by executing "sbatch xds.sh", one needs to adapt the xds.sh to the HPC environment.
+Option 3) excecuting "xds_hpc_wait" directly, similar to 2) except that it will wait until the xds job finishes.
 
 Important information
 1. CLUSTER_NODES (if undefined, will be the MAXIMUM_NUMBER_OF_JOBS) in XDS.INP, will the total number of NODES XDS use in forkxds.Match the value to the number of nodes that you plan to use. Note, it's different from the official release of XDS, where a list of nodes(hostname) is required. The default value is 1 if unspecified.  
