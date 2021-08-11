@@ -17,6 +17,7 @@
 cat $0
 
 # load the modules required for you program - customise for your program
+MX_SOFT=/mxn/groups/sw/mxsw
 export PATH="$MX_SOFT/XDS:$PATH"
 
 #    main   ::name of the main program to be executed; could be

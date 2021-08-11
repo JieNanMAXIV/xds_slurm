@@ -4,7 +4,7 @@
 
 
 process_dir=`pwd`
-sbatch /mxn/groups/sw/mxsw/XDS/xds.sh >current_job
+sbatch $MX_SOFT/XDS/xds.sh >current_job
 current_job=`awk '/Submitted batch job/ {print $4}' current_job`
 # in case of ctrl+c or kill, cancel the slurm job
 trap "scancel $current_job" 2
