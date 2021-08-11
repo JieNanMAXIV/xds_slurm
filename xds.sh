@@ -8,8 +8,6 @@
 #SBATCH -J xds_biomax
 #SBATCH -N1
 #SBATCH --exclusive
-#SBATCH --mincpus=48
-#SBATCH --mem=220000
 
 
 # filenames stdout and stderr - customise, include %j
@@ -20,7 +18,7 @@
 cat $0
 
 # load the modules required for you program - customise for your program
-MX_SOFT=/mxn/groups/biomax/cmxsoft
+MX_SOFT=/mxn/groups/sw/mxsw
 export PATH="$MX_SOFT/XDS:$PATH"
 
 
