@@ -1,0 +1,46 @@
+#Jie Nan at MAXIV, 08/2019
+#jie.nan@maxiv.lu.se
+#to run XDSfork on multiple nodes under SLURM
+#don't use the local machine
+
+ntask=$1  #total number of jobs
+# for maxcpu here we use 24 to match the HPC nodes
+maxcpu=$2 #maximum number of processors used by each job
+main=$3   #name of the main program to be executed
+#!!!!CLUSTER_NODES (XDS.INP) should be the number of cluster nodes
+#or same as ntask if undefined
+nhosts=$4
+
+#if ntask not defined, use 4
+if [ -z "$ntask" ]; then
+   ntask=4
+fi 
+
+#if CLUSTER_NODES is not defined or not defined properly, use $ntask by default
+if [ -z "$nhosts" ]; then
+   nhosts=$ntask
+   echo "CLUSTER_NODES is not defined, use $ntask"
+else
+   if [ $nhosts -lt 1 ]; then
+      nhosts=$ntask
+      echo "CLUSTER_NODES is not defined properly, use $ntask"
+   fi
+fi
+
+if [ $nhosts -gt 1 ]; then 
+  nhosts_new=`expr $nhosts - 1`
+  #may need modification to adapt to the local HPC environment
+  jobid_tmp=`salloc -N$nhosts --exclusive  --no-shell -t 01:00:00 forkxds 2>&1`
+  jobid=`echo $jobid_tmp |awk '/salloc: Granted job allocation/{print $5}'`
+  #extract and list the allocated nodes, may need modification to adapt to the local HPC environment
+  nhosts=`squeue -j $jobid |grep $jobid | awk '{ start=index($8,"["); end=index($8,"]"); pre=substr($8,1,start-1); nodelist=substr($8,start+1,end-start-1); split(nodelist,a,","); for (i in a)  {if (a[i]~/-/) {split(a[i],b,"-"); for (c=b[1];c<=b[2];c++) printf pre c" " }  else print pre a[i]" ";} }'`
+else
+  nhosts= ""
+fi
+#nhosts="localhost $nhosts"
+
+xds_dir=`dirname "$0"`
+$xds_dir/../forkxds_ori $ntask $maxcpu $main $nhosts
+if [ ! -z $jobid ]; then
+   scancel $jobid
+fi
