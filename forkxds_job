@@ -11,8 +11,6 @@
 #SBATCH -o xds_fork_%j.out
 #SBATCH -e xds_fork_%j.err
 #SBATCH --exclusive
-#SBATCH --mincpus=48
-#SBATCH --mem=220000
 
 
 # write this script to stdout-file - useful for scripting errors
