@@ -16,4 +16,4 @@ Option 3) excecute "xds_hpc_wait" directly, similar to 2) except that it will wa
 
 Important information
 1. CLUSTER_NODES (if undefined, will be the MAXIMUM_NUMBER_OF_JOBS) in XDS.INP, is the total number of NODES XDS use in forkxds. Match the value to the number of nodes that you plan to use. Note, it's different from the official release of XDS, where a list of node names(hostname) is required. The default value is 1 if unspecified.  
-2. To reach the best performance, all nodes are reserved exclusively by default (otherwise one can remove the keyword in forkxds_job)
+2. To reach the best performance, all nodes are reserved exclusively by default
